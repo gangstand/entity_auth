@@ -1,6 +1,6 @@
-## Особенности
+## Features
 
-Расширение FastAPI, обеспечивающее поддержку аутентификации JWT (безопасное, простое в использовании и облегченное).
+A FastAPI extension that provides support for JWT authentication (secure, easy to use, and lightweight).
 
 - Access tokens and refresh tokens
 - Freshness Tokens
@@ -9,6 +9,6 @@
 - Support for adding custom claims to JSON Web Tokens
 - Storing tokens in cookies and CSRF protection
 
-## Лицензия
+## License
 
-Этот проект лицензирован в соответствии с условиями лицензии MIT.
+This project is licensed under the terms of the MIT license.
