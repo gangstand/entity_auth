@@ -1,13 +1,12 @@
 import hmac
 import re
-import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Callable, ClassVar
 
 import jwt
 from fastapi import Request, Response, WebSocket
 from jwt.algorithms import has_crypto, requires_cryptography
 
+from .config import Config
 from .exceptions import (
     AccessTokenRequiredError,
     AuthError,
@@ -20,47 +19,7 @@ from .exceptions import (
 )
 
 
-class EntityAuth:
-    token: str | None
-    token_location: ClassVar[set[str]] = {"headers"}
-
-    secret_key: str | None
-    public_key: str | None = None
-    private_key: str | None = None
-    algorithm: str = "HS256"
-    decode_algorithms: list[str] | None = None
-    decode_leeway: timedelta | str = 0
-    encode_issuer: str | None = None
-    decode_issuer: str | None = None
-    decode_audience: str | None = None
-    deny_list_enabled: bool | None = False
-    deny_list_token_checks: ClassVar[set[str]] = {"access", "refresh"}
-    header_name: str | None = "Authorization"
-    header_type: str | None = "Bearer"
-    token_in_deny_list_callback: Callable[..., bool] = None
-    access_token_expires: bool | int | timedelta = timedelta(minutes=60)
-    refresh_token_expires: bool | int | timedelta = timedelta(days=30)
-
-    # option for create cookies
-    access_cookie_key: str | None = "access_token_cookie"
-    refresh_cookie_key: str | None = "refresh_token_cookie"
-    access_cookie_path: str | None = "/"
-    refresh_cookie_path: str | None = "/"
-    cookie_max_age: str | None = None
-    cookie_domain: str | None = None
-    cookie_secure: bool | None = False
-    cookie_same_site: str | None = None
-
-    # option for double submit csrf protection
-    cookie_csrf_protect: bool | None = True
-    access_csrf_cookie_key: str | None = "csrf_access_token"
-    refresh_csrf_cookie_key: str | None = "csrf_refresh_token"
-    access_csrf_cookie_path: str | None = "/"
-    refresh_csrf_cookie_path: str | None = "/"
-    access_csrf_header_name: str | None = "X-CSRF-Token"
-    refresh_csrf_header_name: str | None = "X-CSRF-Token"
-    csrf_methods: ClassVar[set[str]] = {"POST", "PUT", "PATCH", "DELETE"}
-
+class EntityAuth(Config):
     def __init__(self, req: Request = None, res: Response = None) -> None:
         if res and self.jwt_in_cookies:
             self._response = res
@@ -72,18 +31,6 @@ class EntityAuth:
                 auth = req.headers.get(self.header_name.lower())
                 if auth:
                     self._get_jwt_from_headers(auth)
-
-    @property
-    def jwt_in_cookies(self) -> bool:
-        return "cookies" in self.token_location
-
-    @property
-    def jwt_in_headers(self) -> bool:
-        return "headers" in self.token_location
-
-    @classmethod
-    def token_in_deny_list_loader(cls: type["EntityAuth"], callback: Callable[..., bool]) -> None:
-        cls.token_in_deny_list_callback = callback
 
     def _get_jwt_from_headers(self, auth: str) -> None:
         header_name, header_type = self.header_name, self.header_type
@@ -107,9 +54,7 @@ class EntityAuth:
                 )
             self.token = parts[1]
 
-    @staticmethod
-    def _get_jwt_identifier() -> str:
-        return str(uuid.uuid4())
+
 
     @staticmethod
     def _get_int_from_datetime(value: datetime) -> int:
